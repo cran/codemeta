@@ -81,7 +81,7 @@ codemeta_description <- function(file,
   }
 
   codemeta$identifier <- package_name
-  codemeta$description <- descr$get("Description")
+  codemeta$description <- clean_str(descr$get("Description"))
   codemeta$name <- paste0(package_name, ": ", descr$get("Title"))
 
   ## add repository related terms
@@ -127,20 +127,18 @@ add_repository_terms <- function(codemeta, descr) {
     if (length(code_repo) == 1) {
 
       # only one, easy
-      codemeta$codeRepository <- code_repo
+      actual_code_repo <- code_repo
 
     } else {
 
-      # try to identify a code repo
-      i <- which(vapply(source_code_domains(), grepl, logical(1L), code_repo))
+      # try to identify a code repo, select the first match
+      # This is a safer version
+      i <- grep(paste(source_code_domains(), collapse = "|"),
+                code_repo)[1]
       actual_code_repo <- code_repo[i][1]
 
       # otherwise take the first URL arbitrarily
-      if (is.na(actual_code_repo)) {
-        codemeta$codeRepository <- code_repo[1]
-      } else {
-        codemeta$codeRepository <- actual_code_repo
-      }
+      if (is.na(actual_code_repo)) actual_code_repo <- code_repo[1]
 
       # add other URLs as related links
       codemeta$relatedLink <- unique(c(
@@ -148,6 +146,8 @@ add_repository_terms <- function(codemeta, descr) {
         code_repo[code_repo != actual_code_repo]
       ))
     }
+
+    codemeta$codeRepository <- gsub("#(.*)$", "", actual_code_repo)
   }
 
   codemeta

@@ -1,29 +1,7 @@
-
-## FIXME create local cache
-CRAN <- function() {
-
-  data <- suppressWarnings(
-    available_source_packages("https://cran.rstudio.com"))
-
-  return(data)
-}
-
-BIOC <- function() {
-
-  data <- suppressWarnings(
-    available_source_packages("https://www.bioconductor.org/packages/release/bioc"))
-
-  return(data)
-}
-
-
 # guess_provider ---------------------------------------------------------------
 guess_provider <- function(pkg, verbose = FALSE) {
 
-  if (is.null(pkg)) {
-
-    return(NULL)
-  }
+  if (is.null(pkg)) return(NULL)
 
   ## Assumes a single provider
   if (is_cran_package(pkg, verbose)) {
@@ -37,7 +15,7 @@ guess_provider <- function(pkg, verbose = FALSE) {
 
     new_codemeta_organization(
       url = "https://www.bioconductor.org",
-      name = "BioConductor"
+      name = "Bioconductor"
     )
 
   } else {
@@ -46,26 +24,50 @@ guess_provider <- function(pkg, verbose = FALSE) {
   }
 }
 
-#
-# Helper functions can later be moved to utils.R
-#
-
 # available_source_packages ----------------------------------------------------
-available_source_packages <- function(url) {
+codemeta_cache_env <- new.env(parent = emptyenv())
 
-  utils::available.packages(utils::contrib.url(url, "source"))
+available_source_packages <- function(
+  repo = c("CRAN", "Bioconductor"),
+  verbose = FALSE
+) {
+
+  url <-
+    switch(
+      repo,
+      CRAN         = "https://cloud.r-project.org",
+      Bioconductor = "https://www.bioconductor.org/packages/release/bioc",
+      stop("Only CRAN and Bioconductor repos are supported.")
+    )
+
+  contrib_url <- utils::contrib.url(url, "source")
+
+  if (is.null(codemeta_cache_env[[repo]])) {
+
+    if (verbose) message(paste("Getting", repo, "metadata..."))
+
+    codemeta_cache_env[[repo]] <- utils::available.packages(contrib_url)
+
+    if (verbose) message(paste("Got", repo, "metadata!"))
+  }
+
+  suppressWarnings(codemeta_cache_env[[repo]])
+
 }
 
 # is_cran_package --------------------------------------------------------------
 is_cran_package <- function(pkg, verbose = FALSE) {
 
-  is_in_package_info(pkg, CRAN())
+  is_in_package_info(pkg, available_source_packages("CRAN", verbose = verbose))
 }
 
 # is_bioconductor_package ------------------------------------------------------
 is_bioconductor_package <- function(pkg, verbose = FALSE) {
 
-  is_in_package_info(pkg, BIOC())
+  is_in_package_info(
+    pkg,
+    available_source_packages("Bioconductor", verbose = verbose)
+  )
 }
 
 # is_in_package_info -----------------------------------------------------------

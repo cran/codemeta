@@ -37,7 +37,7 @@ get_sameAs <- function(provider, remote_provider, identifier) {
   # assign each keyword a function that returns the URL to a given package name
   url_generators <- list(
     "Comprehensive R Archive Network (CRAN)" = get_url_cran_package,
-    "BioConductor" = get_url_bioconductor_package
+    "Bioconductor" = get_url_bioconductor_package
   )
 
   # The remote provider takes precedence over the non-remote provider
@@ -106,4 +106,4 @@ add_remote_to_dep <- function(package, remotes) {
 }
 
 
-## minimeta does not try to parse sysreqs with rhub, merely uses text from DESCRIPTION
+## codemeta does not try to parse sysreqs with rhub, merely uses text from DESCRIPTION
